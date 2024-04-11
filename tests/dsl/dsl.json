@@ -1,0 +1,47 @@
+{
+  "variate_age_1": {
+    "key": "age",
+    "name": "年龄",
+    "desc": "用户年龄",
+    "version": "1",
+    "value_type": "number",
+    "default": 20,
+    "is_input": false
+  },
+  "variate_年龄_1": {
+    "key": "年龄",
+    "name": "年龄",
+    "desc": "用户年龄",
+    "version": "1",
+    "value_type": "number",
+    "default": 20,
+    "is_input": true
+  },
+  "variate_性别_1": {
+    "key": "性别",
+    "name": "性别",
+    "desc": "用户性别",
+    "version": "1",
+    "value_type": "string",
+    "default": "男",
+    "is_input": true
+  },
+  "variate_身高_1": {
+    "key": "身高",
+    "name": "身高",
+    "desc": "用户身高",
+    "version": "1",
+    "value_type": "number",
+    "default": 173,
+    "is_input": true
+  },
+  "variate_命中结果_1": {
+    "key": "命中结果",
+    "name": "命中结果",
+    "desc": "命中结果",
+    "version": "1",
+    "value_type": "bool",
+    "default": false,
+    "is_input": false
+  }
+}

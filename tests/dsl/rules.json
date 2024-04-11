@@ -1,0 +1,48 @@
+{
+  "key": "rule1",
+  "name": "用户筛选",
+  "desc": "用户筛选",
+  "version": "1",
+  "parallel": true,
+  "rule": {
+    "年龄大于18": {
+      "left": "variate_年龄_1",
+      "operator": "gt",
+      "right": "input_18_number"
+    },
+    "年龄小于40": {
+      "left": "variate_年龄_1",
+      "operator": "lt",
+      "right": "input_40_number"
+    },
+    "性别女": {
+      "left": "variate_性别_1",
+      "operator": "eq",
+      "right": "input_女_string"
+    },
+    "身高大于等于170": {
+      "left": "variate_身高_1",
+      "operator": "gte",
+      "right": "input_170_number"
+    }
+  },
+  "expression": "(年龄大于18 && 年龄小于40) && (性别女 || 身高大于等于170)",
+  "action_true": [
+    {
+      "action_type": "assignment",
+      "variate": "variate_命中结果_1",
+      "value": "input_true_bool"
+    },
+    {
+      "action_type": "geturl",
+      "url": "https://www.baidu.com/robots.txt"
+    }
+  ],
+  "action_false": [
+    {
+      "action_type": "assignment",
+      "variate": "variate_命中结果_1",
+      "value": "input_false_bool"
+    }
+  ]
+}
