@@ -67,7 +67,8 @@ func (gisk *Gisk) Parse(elementType ElementType, key string, version string) err
 				return err
 			}
 		}
-		return rules.Parse(gisk)
+		_, err := rules.Parse(gisk)
+		return err
 	}
 
 	return nil

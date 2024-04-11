@@ -45,7 +45,7 @@ func TestRules_Parse(t *testing.T) {
 	bytes, _ := os.ReadFile("./dsl/rules.json")
 	var rules gisk.Rules
 	json.Unmarshal(bytes, &rules)
-	err := rules.Parse(g)
+	_, err := rules.Parse(g)
 	if err != nil {
 		t.Error(err)
 	}

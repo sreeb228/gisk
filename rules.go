@@ -21,22 +21,22 @@ type Rules struct {
 	ActionFalse []json.RawMessage `json:"action_false" yaml:"action_false"`
 }
 
-func (rules *Rules) Parse(gisk *Gisk) error {
+func (rules *Rules) Parse(gisk *Gisk) (bool, error) {
 	exp := splitExpression(rules.Expression)
 	RPN, err := InfixToRPN(exp)
 	if err != nil {
-		return err
+		return false, err
 	}
 	resultMap := make(map[string]bool)
 	if rules.Parallel {
 		resultMap, err = rules.parallelParseRule(gisk)
 		if err != nil {
-			return err
+			return false, err
 		}
 	}
 	res, err := rules.evalRPN(gisk, RPN, resultMap)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// 执行动作
@@ -52,7 +52,7 @@ func (rules *Rules) Parse(gisk *Gisk) error {
 		var actionType ActionType
 		err = json.Unmarshal(action, &actionType)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		//获取动作类型对应的结构体
@@ -60,13 +60,13 @@ func (rules *Rules) Parse(gisk *Gisk) error {
 			err = json.Unmarshal(action, &actionStruct)
 			err = actionStruct.Parse(gisk)
 			if err != nil {
-				return err
+				return false, err
 			}
 		} else {
-			return fmt.Errorf("action type %s not found", actionType.ActionType)
+			return false, fmt.Errorf("action type %s not found", actionType.ActionType)
 		}
 	}
-	return nil
+	return res, nil
 }
 
 // parallelParseRule 并行执行规则获取结果
