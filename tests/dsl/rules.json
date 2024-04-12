@@ -4,7 +4,7 @@
   "desc": "用户筛选",
   "version": "1",
   "parallel": true,
-  "rule": {
+  "compares": {
     "年龄大于18": {
       "left": "variate_年龄_1",
       "operator": "gt",

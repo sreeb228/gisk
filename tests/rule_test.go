@@ -2,76 +2,53 @@ package tests
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"gitee.com/sreeb/gisk"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
 )
 
-type fileDslGetter struct {
+type getUrl struct {
+	gisk.ActionType
+	Url string `json:"url"`
 }
 
-func (getter *fileDslGetter) GetDsl(elementType gisk.ElementType, key string, version string) (string, error) {
-	bytes, err := os.ReadFile("./dsl/dsl.json")
+func (u *getUrl) Parse(gisk *gisk.Gisk) error {
+	// 发送GET请求
+	resp, err := http.Get(u.Url)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
+	defer resp.Body.Close()
 
-	var dsl map[string]interface{}
-	err = json.Unmarshal(bytes, &dsl)
+	// 读取响应体
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	k := string(elementType) + "_" + key + "_" + version
-
-	if v, ok := dsl[k]; ok {
-		//v 转成string
-		vv, _ := json.Marshal(v)
-		return string(vv), nil
-	}
-	return "", errors.New("not found dsl")
+	// 打印响应体内容
+	bodyStr := string(bodyBytes)
+	fmt.Println("Response Body:", bodyStr)
+	return nil
 }
 
 func TestRule_Parse(t *testing.T) {
-	type fields struct {
-		Left     string
-		Operator gisk.Operator
-		Right    string
-	}
-	type args struct {
-		gisk *gisk.Gisk
-	}
+	// 注册请求url动作
+	gisk.RegisterAction("geturl", &getUrl{})
 
 	g := gisk.New()
-
 	g.SetDslGetter(&fileDslGetter{})
 
-	tests := []struct {
-		name     string
-		fields   fields
-		args     args
-		wantBool bool
-		wantErr  bool
-	}{
-		{name: "test", fields: fields{Left: "variate_age_1", Operator: gisk.IN, Right: "input_18,20,3_array"}, args: args{gisk: g}, wantBool: true, wantErr: false},
+	bytes, _ := os.ReadFile("./dsl/rules.json")
+	var rule gisk.Rule
+	json.Unmarshal(bytes, &rule)
+	_, err := rule.Parse(g)
+	if err != nil {
+		t.Error(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rule := &gisk.Rule{
-				Left:     tt.fields.Left,
-				Operator: tt.fields.Operator,
-				Right:    tt.fields.Right,
-			}
-			gotBool, err := rule.Parse(tt.args.gisk)
+	fmt.Println(g.GetVariates())
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotBool != tt.wantBool {
-				t.Errorf("Parse() gotBool = %v, want %v", gotBool, tt.wantBool)
-			}
-		})
-	}
 }

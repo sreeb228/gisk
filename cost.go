@@ -1,5 +1,6 @@
 package gisk
 
+// ValueType 值类型
 type ValueType string
 
 const (
@@ -10,7 +11,7 @@ const (
 	BOOL   ValueType = "bool"
 )
 
-// 元素类型
+// ElementType 元素类型
 type ElementType string
 
 const (

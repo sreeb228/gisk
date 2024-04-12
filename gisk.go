@@ -55,19 +55,19 @@ func (gisk *Gisk) Parse(elementType ElementType, key string, version string) err
 
 	switch elementType {
 	case RULES:
-		var rules Rules
+		var rule Rule
 		if gisk.DslFormat == JSON {
-			err := json.Unmarshal([]byte(dsl), &rules)
+			err := json.Unmarshal([]byte(dsl), &rule)
 			if err != nil {
 				return err
 			}
 		} else if gisk.DslFormat == YAML {
-			err := yaml.Unmarshal([]byte(dsl), &rules)
+			err := yaml.Unmarshal([]byte(dsl), &rule)
 			if err != nil {
 				return err
 			}
 		}
-		_, err := rules.Parse(gisk)
+		_, err := rule.Parse(gisk)
 		return err
 	}
 
