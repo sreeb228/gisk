@@ -18,7 +18,7 @@ const (
 	VARIATE ElementType = "variate" //变量
 	INPUT   ElementType = "input"   //输入值
 	FUNC    ElementType = "func"    //函数
-	RULES   ElementType = "rules"   //规则
+	RULE    ElementType = "rule"    //规则
 )
 
 // Operator 运算符
@@ -35,4 +35,12 @@ const (
 	NOTIN   Operator = "notIn"
 	LIKE    Operator = "like"
 	NOTLIKE Operator = "notLike"
+)
+
+// BreakMode 规则集规则中断模式
+type BreakMode string
+
+const (
+	HitBreak  = "hit_break"  //规则命中中断后续规则
+	MissBreak = "miss_break" //规则未命中中断后续规则
 )

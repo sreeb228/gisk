@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 	"sync"
@@ -209,4 +210,21 @@ func (r *Rule) evalRPN(gisk *Gisk, RPN []string, resultMap map[string]bool) (boo
 		}
 	}
 	return stack[0], nil
+}
+
+func GetRule(gisk *Gisk, key string, version string) (*Rule, error) {
+	dsl, _ := gisk.DslGetter.GetDsl(RULE, key, version)
+	var r Rule
+	if gisk.DslFormat == JSON {
+		err := json.Unmarshal([]byte(dsl), &r)
+		if err != nil {
+			return nil, err
+		}
+	} else if gisk.DslFormat == YAML {
+		err := yaml.Unmarshal([]byte(dsl), &r)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &r, nil
 }
