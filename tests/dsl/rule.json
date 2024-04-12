@@ -8,7 +8,7 @@
     "年龄大于18": {
       "left": "variate_年龄_1",
       "operator": "gt",
-      "right": "input_18_number"
+      "right": "func_rand(input_1_number,func_sum(input_10_number,input_20_string))"
     },
     "年龄小于40": {
       "left": "variate_年龄_1",

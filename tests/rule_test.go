@@ -42,7 +42,7 @@ func TestRule_Parse(t *testing.T) {
 	g := gisk.New()
 	g.SetDslGetter(&fileDslGetter{})
 
-	bytes, _ := os.ReadFile("./dsl/rules.json")
+	bytes, _ := os.ReadFile("./dsl/rule.json")
 	var rule gisk.Rule
 	json.Unmarshal(bytes, &rule)
 	_, err := rule.Parse(g)
