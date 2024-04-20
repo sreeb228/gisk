@@ -26,7 +26,7 @@ func (r *Ruleset) Parse(gisk *Gisk) error {
 		var wg sync.WaitGroup
 		wg.Add(len(r.Rules))
 
-		errChan := make(chan error)
+		errChan := make(chan error, len(r.Rules))
 		defer close(errChan)
 		for _, rule := range r.Rules {
 			go func(rulesetRule *rulesetRule) {
@@ -43,10 +43,11 @@ func (r *Ruleset) Parse(gisk *Gisk) error {
 			}(rule)
 		}
 		wg.Wait()
-		for err := range errChan {
-			if err != nil {
-				return err
-			}
+
+		//这里如果使用for range 会导致报错，因为errChan已经不在其他协程中，永远不会写入进去数据了，
+		//range到chan中没有数据就会panic，可以close后再循环，但是这样可能在close前发生panic导致内存泄漏
+		if len(errChan) > 0 {
+			return <-errChan
 		}
 	} else {
 		for _, rule := range r.Rules {
