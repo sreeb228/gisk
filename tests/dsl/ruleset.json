@@ -1,0 +1,24 @@
+{
+  "key": "ruleset",
+  "name": "决策集1",
+  "desc": "决策集1",
+  "version": "1",
+  "parallel": false,
+  "rules": [
+    {
+      "rule_key": "rule1",
+      "rule_version": "1",
+      "break_mode": "hit_break"
+    },
+    {
+      "rule_key": "rule2",
+      "rule_version": "1",
+      "break_mode": "miss_break"
+    },
+    {
+      "rule_key": "rule3",
+      "rule_version": "1",
+      "break_mode": "miss_break"
+    }
+  ]
+}

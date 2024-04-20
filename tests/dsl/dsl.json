@@ -43,5 +43,81 @@
     "value_type": "bool",
     "default": false,
     "is_input": false
+  },
+  "rule_rule1_1": {
+    "key": "rule1",
+    "name": "用户筛选",
+    "desc": "用户筛选",
+    "version": "1",
+    "parallel": true,
+    "compares": {
+      "年龄大于18": {
+        "left": "variate_年龄_1",
+        "operator": "gt",
+        "right": "input_18_number"
+      }
+    },
+    "expression": "年龄大于18",
+    "action_true": [
+      {
+        "action_type": "assignment",
+        "variate": "variate_命中结果_1",
+        "value": "input_true_bool"
+      }
+    ]
+  },
+  "rule_rule2_1": {
+    "key": "rule2",
+    "name": "用户筛选",
+    "desc": "用户筛选",
+    "version": "1",
+    "parallel": true,
+    "compares": {
+      "年龄大于18": {
+        "left": "variate_年龄_1",
+        "operator": "gt",
+        "right": "input_18_number"
+      },
+      "身高大于180": {
+        "left": "variate_身高_1",
+        "operator": "gt",
+        "right": "input_180_number"
+      }
+    },
+    "expression": "年龄大于18 && 身高大于180",
+    "action_true": [
+      {
+        "action_type": "assignment",
+        "variate": "variate_命中结果_1",
+        "value": "input_true_bool"
+      }
+    ]
+  },
+  "rule_rule3_1": {
+    "key": "rule3",
+    "name": "用户筛选",
+    "desc": "用户筛选",
+    "version": "1",
+    "parallel": true,
+    "compares": {
+      "年龄大于18": {
+        "left": "variate_年龄_1",
+        "operator": "gt",
+        "right": "input_1_number"
+      },
+      "性别男": {
+        "left": "variate_性别_1",
+        "operator": "eq",
+        "right": "input_男_string"
+      }
+    },
+    "expression": "年龄大于18 || 性别男",
+    "action_true": [
+      {
+        "action_type": "assignment",
+        "variate": "variate_命中结果_1",
+        "value": "input_true_bool"
+      }
+    ]
   }
 }
