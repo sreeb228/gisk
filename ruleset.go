@@ -1,6 +1,8 @@
 package gisk
 
 import (
+	"encoding/json"
+	"gopkg.in/yaml.v3"
 	"sync"
 )
 
@@ -68,4 +70,21 @@ func (r *Ruleset) Parse(gisk *Gisk) error {
 		}
 	}
 	return nil
+}
+
+func GetRuleset(gisk *Gisk, key string, version string) (*Ruleset, error) {
+	dsl, _ := gisk.DslGetter.GetDsl(RULESET, key, version)
+	var r Ruleset
+	if gisk.DslFormat == JSON {
+		err := json.Unmarshal([]byte(dsl), &r)
+		if err != nil {
+			return nil, err
+		}
+	} else if gisk.DslFormat == YAML {
+		err := yaml.Unmarshal([]byte(dsl), &r)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &r, nil
 }

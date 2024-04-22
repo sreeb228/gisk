@@ -54,6 +54,13 @@ func (gisk *Gisk) Parse(elementType ElementType, key string, version string) err
 		}
 		_, err = rule.Parse(gisk)
 		return err
+	case RULESET:
+		ruleset, err := GetRuleset(gisk, key, version)
+		if err != nil {
+			return err
+		}
+		err = ruleset.Parse(gisk)
+		return err
 	}
 
 	return nil

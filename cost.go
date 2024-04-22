@@ -19,6 +19,7 @@ const (
 	INPUT   ElementType = "input"   //输入值
 	FUNC    ElementType = "func"    //函数
 	RULE    ElementType = "rule"    //规则
+	RULESET ElementType = "ruleset" //规则集
 )
 
 // Operator 运算符
