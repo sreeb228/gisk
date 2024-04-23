@@ -36,8 +36,8 @@ type Rule struct {
 	Parallel    bool                `json:"parallel" yaml:"parallel"`      //是否并发执行
 	Compares    map[string]*Compare `json:"compares" yaml:"compares"`      //比较
 	Expression  string              `json:"expression"  yaml:"expression"` //计算公式
-	ActionTure  []json.RawMessage   `json:"action_true" yaml:"action_true"`
-	ActionFalse []json.RawMessage   `json:"action_false" yaml:"action_false"`
+	ActionTure  []RawMessage        `json:"action_true" yaml:"action_true"`
+	ActionFalse []RawMessage        `json:"action_false" yaml:"action_false"`
 }
 
 func (r *Rule) Parse(gisk *Gisk) (bool, error) {
@@ -59,7 +59,7 @@ func (r *Rule) Parse(gisk *Gisk) (bool, error) {
 	}
 
 	// 执行动作
-	var actions []json.RawMessage
+	var actions []RawMessage
 	if res {
 		actions = r.ActionTure
 	} else {
@@ -69,20 +69,44 @@ func (r *Rule) Parse(gisk *Gisk) (bool, error) {
 	for _, action := range actions {
 		//先获取动作类型
 		var actionType ActionType
-		err = json.Unmarshal(action, &actionType)
-		if err != nil {
-			return false, err
-		}
-
-		//获取动作类型对应的结构体
-		if actionStruct, ok := getAction(actionType.ActionType); ok {
+		switch gisk.DslFormat {
+		case JSON:
+			err = json.Unmarshal(action, &actionType)
+			if err != nil {
+				return false, err
+			}
+			actionStruct, ok := getAction(actionType.ActionType)
+			if !ok {
+				return false, fmt.Errorf("action type %s not found", actionType.ActionType)
+			}
 			err = json.Unmarshal(action, &actionStruct)
+			if err != nil {
+				return false, err
+			}
 			err = actionStruct.Parse(gisk)
 			if err != nil {
 				return false, err
 			}
-		} else {
-			return false, fmt.Errorf("action type %s not found", actionType.ActionType)
+
+		case YAML:
+			err = yaml.Unmarshal(action, &actionType)
+			if err != nil {
+				return false, err
+			}
+			actionStruct, ok := getAction(actionType.ActionType)
+			if !ok {
+				return false, fmt.Errorf("action type %s not found", actionType.ActionType)
+			}
+			err = yaml.Unmarshal(action, &actionStruct)
+			if err != nil {
+				return false, err
+			}
+			err = actionStruct.Parse(gisk)
+			if err != nil {
+				return false, err
+			}
+		default:
+			return false, errors.New("dsl format not support")
 		}
 	}
 	return res, nil
