@@ -45,3 +45,12 @@ const (
 	HitBreak  = "hit_break"  //规则命中中断后续规则
 	MissBreak = "miss_break" //规则未命中中断后续规则
 )
+
+// FlowNodeType 流程节点类型
+type FlowNodeType string
+
+const FlowStartNodeKey = "start"
+const (
+	GeneralFlowNode FlowNodeType = "general_flow_node"
+	BranchFlowNode  FlowNodeType = "branch_flow_node"
+)

@@ -1,6 +1,8 @@
 package gisk
 
 import (
+	"encoding/json"
+	"gopkg.in/yaml.v3"
 	"sync"
 )
 
@@ -74,4 +76,14 @@ func (gisk *Gisk) GetVariates() map[string]interface{} {
 		res[k] = v.Value
 	}
 	return res
+}
+
+func (gisk *Gisk) Unmarshal(data []byte, v any) error {
+	var err error
+	if gisk.DslFormat == JSON {
+		err = json.Unmarshal(data, &v)
+	} else if gisk.DslFormat == YAML {
+		err = yaml.Unmarshal(data, &v)
+	}
+	return err
 }
