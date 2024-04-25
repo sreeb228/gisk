@@ -10,8 +10,9 @@ gisk是独立的即插即用的轻量级决策引擎，支持json和yaml格式DS
 - 决策（规则）
 - 决策集
 - 决策流
+- 分流决策流
+- 赋值决策流
 - 评分卡
-- 条件分流
 - 支持数据类型：number, string, bool, array, map
 - 支持运算符号（支持自定义，覆盖默认运算符）：eq, neq, gt, lt, gte, lte, in, notIn, like, notLike
 - 支持函数（支持自定义，函数支持嵌套）：内置函数rand、sum
@@ -149,4 +150,145 @@ func main() {
     //...
 }
 ```
-## 未完待续。。。
+## DSL语法
+
+### 基础值
+
+*基础值包含变量，输入值，函数。在dsl中用字符串表示。基础值*
+
+#### 变量
+
+表示法：`variate_age_1`
+
+解释：`variate`表示为变量类型，`age`表示变量唯一key（key可以有下划线），`1`表示变量版本号。
+
+变量DSL：
+```json
+{
+    "key": "age",
+    "name": "年龄",
+    "desc": "用户年龄",
+    "version": "1",
+    "value_type": "number",
+    "default": 20,
+    "is_input": false
+}
+```
+变量结构体：
+```go
+type Variate struct {
+	Key       string      `json:"key" yaml:"key"`               //唯一标识
+	Name      string      `json:"name" yaml:"name"`             //变量名称（前端页面使用，不涉及逻辑）
+	Desc      string      `json:"desc" yaml:"desc"`             //描述（前端页面使用，不涉及逻辑）
+	Version   string      `json:"version" yaml:"version"`       //版本
+	ValueType ValueType   `json:"value_type" yaml:"value_type"` //值类型（number：转成float64, string, bool, array:以,分割转成array, map：json字符串转成map）
+	Default   interface{} `json:"default" yaml:"default"`       //默认值
+	IsInput   bool        `json:"is_input" yaml:"is_input"`     //是否要从输入值中匹配(true时会从输入值中匹配相同key的值进行赋值)
+}
+```
+
+#### 输入值
+表示法：`input_1_number`
+
+解释：`input`表示为输入值类型，`1`表示输入值，`number`表示输入值数据类型。
+
+输入值没有DSL
+
+#### 函数
+
+表示法：`func_rand(input_1_number,func_sum(input_10_number,input_20_string))`
+
+解释：函数支持嵌套，函数参数只能是基础值。上述表达式解释为：rand(1,sum(10,20))，rand函数两个参数1和sum函数，sum函数两个参数10和20。 注册函数需要实现 `type Func func(parameters ...Value) (Value, error)`类型。
+
+函数无DSL
+
+## 规则（决策）
+
+*规则是基于多个比较条件通过逻辑运算符进行组合，最终得到一个布尔值。可以根据最终布尔值进行后续动作执行，赋值，访问url，发送消息，连接数据库等等操作。规则支持括号运算，支持串行并行执行*
+
+规则dsl
+
+```json
+{
+  "key": "rule1",   //唯一key
+  "name": "用户筛选", //规则名称
+  "desc": "用户筛选", //规则描述
+  "version": "1",  //规则版本
+  "parallel": true, //是否并行执行（并行执行会先并发获取比较条件组所有结果，再用规则表达式进行逻辑运算）
+  "compares": {     
+    "年龄小于40": {
+      "left": "variate_年龄_1", //比较条件左边
+      "operator": "lt", //比较条件运算符
+      "right": "input_40_number" //比较条件右边
+    },
+    "性别女": {
+      "left": "variate_性别_1",
+      "operator": "eq",
+      "right": "input_女_string"
+    },
+    "身高大于等于170": {
+      "left": "variate_身高_1",
+      "operator": "gte",
+      "right": "input_170_number"
+    }
+  },  //比较条件组
+  "expression": "年龄小于40 && (性别女 || 身高大于等于170)", //规则表达式
+  "action_true": [
+    {
+      "action_type": "assignment",  //赋值操作
+      "variate": "variate_命中结果_1", //赋值变量
+      "value": "input_true_bool" //赋值值
+    },
+    {
+      "action_type": "geturl", //访问url
+      "url": "https://xxx.com" //url
+    }
+  ],  //true执行动作
+  "action_false": [
+    {
+      "action_type": "assignment", //赋值操作
+      "variate": "variate_命中结果_1", //赋值变量
+      "value": "input_false_bool" //赋值值
+    }
+  ] //false执行动作
+}
+
+```
+上述规则解释为：如果年龄小于40且性别为女或者身高大于等于170，则命中，否则未命中。命中时执行动作：变量命中结果赋值为true时，访问url。未命中时，赋值变量命中结果为false。
+
+## 规则集（决策集）
+
+* 规则集是多个规则的集合，支持串行并行执行和中断。并行模式下规则的先后顺序和中断不生效*
+
+规则集dsl:
+```json
+{
+  "key": "ruleset", //唯一key
+  "name": "决策集1", //规则集名称
+  "desc": "决策集1", //规则集描述
+  "version": "1", //规则集版本
+  "parallel": false, //是否并行执行（串行执行：顺序执行规则，中断后不执行后续规则。 并行执行：并发执行规则，不考虑顺序和中断）
+  "rules": [ 
+    {
+      "rule_key": "rule1", //规则key
+      "rule_version": "1", //规则版本
+      "break_mode": "hit_break" //中断模式:hit_break命中中断，miss_break未命中中断。中断表示不执行后续的规则
+    },
+    {
+      "rule_key": "rule2",
+      "rule_version": "1",
+      "break_mode": "miss_break"
+    },
+    {
+      "rule_key": "rule3",
+      "rule_version": "1",
+      "break_mode": "miss_break"
+    }
+  ]//规则集规则
+}
+```
+
+## 决策流
+决策流支持普通决策流，分流决策流和赋值决策流（规则树）
+
+未完待续。。
