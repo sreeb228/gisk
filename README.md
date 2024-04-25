@@ -256,6 +256,29 @@ type Variate struct {
 ```
 上述规则解释为：如果年龄小于40且性别为女或者身高大于等于170，则命中，否则未命中。命中时执行动作：变量命中结果赋值为true时，访问url。未命中时，赋值变量命中结果为false。
 
+
+规则结构体：
+```go
+type Rule struct {
+	Key         string              `json:"key" yaml:"key"`                //唯一标识
+	Name        string              `json:"name" yaml:"name"`              //名称
+	Desc        string              `json:"desc" yaml:"desc"`              //描述
+	Version     string              `json:"version" yaml:"version"`        //版本
+	Parallel    bool                `json:"parallel" yaml:"parallel"`      //是否并发执行
+	Compares    map[string]*Compare `json:"compares" yaml:"compares"`      //比较
+	Expression  string              `json:"expression"  yaml:"expression"` //计算公式
+	ActionTure  []RawMessage        `json:"action_true" yaml:"action_true"` //命中执行动作
+	ActionFalse []RawMessage        `json:"action_false" yaml:"action_false"` //未命中执行动作
+}
+type Compare struct {
+  Left     string   `json:"left" yaml:"left"`
+  Operator Operator `json:"operator" yaml:"operator"` // 比较符号(可自定义注册)
+  Right    string   `json:"right" yaml:"right"`
+}
+```
+
+
+
 ## 规则集（决策集）
 
 * 规则集是多个规则的集合，支持串行并行执行和中断。并行模式下规则的先后顺序和中断不生效*
@@ -287,6 +310,25 @@ type Variate struct {
   ]//规则集规则
 }
 ```
+
+规则集结构体：
+```go
+type Ruleset struct {
+	Key      string         `json:"key" yaml:"key"`           //唯一标识
+	Name     string         `json:"name" yaml:"name"`         //名称
+	Desc     string         `json:"desc" yaml:"desc"`         //描述
+	Version  string         `yaml:"version" json:"version"`   //版本
+	Parallel bool           `json:"parallel" yaml:"parallel"` //是否并发执行
+	Rules    []*rulesetRule `json:"rules" yaml:"rules"`       //规则集规则
+}
+
+type rulesetRule struct {
+	RuleKey     string    `json:"rule_key" yaml:"rule_key"` //规则key
+	RuleVersion string    `json:"rule_version" yaml:"rule_version"` //规则版本
+	BreakMode   BreakMode `json:"break_mode" yaml:"break_mode"` //中断模式
+}
+```
+
 
 ## 决策流
 决策流支持普通决策流，分流决策流和赋值决策流（规则树）
