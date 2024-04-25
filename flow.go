@@ -133,3 +133,46 @@ func (node *generalFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, err
 	}
 	return append([]NodeInterface{}, nextNode), nil
 }
+
+// 分支节点
+type branchFlowNode struct {
+	NodeKey  string       `json:"node_key" yaml:"node_key"`
+	NodeType FlowNodeType `json:"node_type" yaml:"node_type"`
+	Left     string       `json:"left" yaml:"left"`
+	Branches []struct {
+		Operator Operator `json:"operator" yaml:"operator"` // 比较符号
+		Right    string   `json:"right" yaml:"right"`
+		NextNode string   `json:"next_node" yaml:"next_node"`
+	} `json:"branches" yaml:"branches"`
+}
+
+func (node *branchFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, error) {
+	left, err := GetValueByTrait(gisk, node.Left)
+	if err != nil {
+		return nil, err
+	}
+	nextNodes := make([]NodeInterface, 0)
+	for _, branch := range node.Branches {
+		right, err := GetValueByTrait(gisk, branch.Right)
+		if err != nil {
+			return nil, err
+		}
+		res, err := Operation(left, branch.Operator, right)
+		if err != nil {
+			return nil, err
+		}
+		if res {
+			if branch.NextNode != "" {
+				nextNode, err := flow.GetNode(gisk, branch.NextNode)
+				if err != nil {
+					return nil, err
+				}
+				if nextNode == nil {
+					return nil, errors.New("next node not found")
+				}
+				nextNodes = append(nextNodes, nextNode)
+			}
+		}
+	}
+	return nextNodes, nil
+}
