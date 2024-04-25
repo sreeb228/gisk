@@ -1,10 +1,8 @@
 package gisk
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"strings"
 	"sync"
 )
@@ -43,13 +41,9 @@ func (a *Assignment) Parse(gisk *Gisk) error {
 		return err
 	}
 	var variate Variate
-	switch gisk.DslFormat {
-	case JSON:
-		err = json.Unmarshal([]byte(dsl), &variate)
-	case YAML:
-		err = yaml.Unmarshal([]byte(dsl), &variate)
-	default:
-		return errors.New("failed to unmarshal DSL: " + err.Error())
+	err = gisk.Unmarshal([]byte(dsl), &variate)
+	if err != nil {
+		return err
 	}
 
 	v, err := GetValueByTrait(gisk, a.Value)

@@ -1,10 +1,8 @@
 package gisk
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 	"sync"
@@ -69,44 +67,21 @@ func (r *Rule) Parse(gisk *Gisk) (bool, error) {
 	for _, action := range actions {
 		//先获取动作类型
 		var actionType ActionType
-		switch gisk.DslFormat {
-		case JSON:
-			err = json.Unmarshal(action, &actionType)
-			if err != nil {
-				return false, err
-			}
-			actionStruct, ok := getAction(actionType.ActionType)
-			if !ok {
-				return false, fmt.Errorf("action type %s not found", actionType.ActionType)
-			}
-			err = json.Unmarshal(action, &actionStruct)
-			if err != nil {
-				return false, err
-			}
-			err = actionStruct.Parse(gisk)
-			if err != nil {
-				return false, err
-			}
-
-		case YAML:
-			err = yaml.Unmarshal(action, &actionType)
-			if err != nil {
-				return false, err
-			}
-			actionStruct, ok := getAction(actionType.ActionType)
-			if !ok {
-				return false, fmt.Errorf("action type %s not found", actionType.ActionType)
-			}
-			err = yaml.Unmarshal(action, &actionStruct)
-			if err != nil {
-				return false, err
-			}
-			err = actionStruct.Parse(gisk)
-			if err != nil {
-				return false, err
-			}
-		default:
-			return false, errors.New("dsl format not support")
+		err = gisk.Unmarshal(action, &actionType)
+		if err != nil {
+			return false, err
+		}
+		actionStruct, ok := getAction(actionType.ActionType)
+		if !ok {
+			return false, fmt.Errorf("action type %s not found", actionType.ActionType)
+		}
+		err = gisk.Unmarshal(action, &actionStruct)
+		if err != nil {
+			return false, err
+		}
+		err = actionStruct.Parse(gisk)
+		if err != nil {
+			return false, err
 		}
 	}
 	return res, nil
@@ -239,16 +214,9 @@ func (r *Rule) evalRPN(gisk *Gisk, RPN []string, resultMap map[string]bool) (boo
 func GetRule(gisk *Gisk, key string, version string) (*Rule, error) {
 	dsl, _ := gisk.DslGetter.GetDsl(RULE, key, version)
 	var r Rule
-	if gisk.DslFormat == JSON {
-		err := json.Unmarshal([]byte(dsl), &r)
-		if err != nil {
-			return nil, err
-		}
-	} else if gisk.DslFormat == YAML {
-		err := yaml.Unmarshal([]byte(dsl), &r)
-		if err != nil {
-			return nil, err
-		}
+	err := gisk.Unmarshal([]byte(dsl), &r)
+	if err != nil {
+		return nil, err
 	}
 	return &r, nil
 }

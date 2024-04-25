@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gogf/gf/v2/util/gconv"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 )
@@ -68,14 +67,9 @@ func GetValueByTrait(gisk *Gisk, key string) (Value, error) {
 			return Value{}, e
 		}
 		var variate Variate
-		var err error
-		switch gisk.DslFormat {
-		case JSON:
-			err = json.Unmarshal([]byte(dsl), &variate)
-		case YAML:
-			err = yaml.Unmarshal([]byte(dsl), &variate)
-		default:
-			return Value{}, errors.New("failed to unmarshal DSL: " + err.Error())
+		err := gisk.Unmarshal([]byte(dsl), &variate)
+		if err != nil {
+			return Value{}, err
 		}
 		return variate.Parse(gisk)
 	case string(FUNC): //特征格式 func_rand(func_sum(input_1_number,input_2_number),input_100_number)函数可以嵌套函数
