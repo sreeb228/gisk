@@ -20,6 +20,7 @@ const (
 	FUNC    ElementType = "func"    //函数
 	RULE    ElementType = "rule"    //规则
 	RULESET ElementType = "ruleset" //规则集
+	FLOW    ElementType = "flow"    //决策流
 )
 
 // Operator 运算符
@@ -53,4 +54,5 @@ const FlowStartNodeKey = "start"
 const (
 	GeneralFlowNode FlowNodeType = "general_flow_node"
 	BranchFlowNode  FlowNodeType = "branch_flow_node"
+	ActionFlowNode  FlowNodeType = "action_flow_node"
 )

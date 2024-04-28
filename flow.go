@@ -1,6 +1,7 @@
 package gisk
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"sync"
 )
@@ -58,6 +59,7 @@ func (f *Flow) getStartNode(gisk *Gisk) (NodeInterface, error) {
 
 func (f *Flow) GetNode(gisk *Gisk, key string) (NodeInterface, error) {
 	f.initNodesOnce.Do(func() {
+		f.nodes = make(map[string]NodeInterface)
 		for _, nodeRaw := range f.Nodes {
 			var nodeType flowNodeType
 			if err := gisk.Unmarshal(nodeRaw, &nodeType); err != nil {
@@ -67,6 +69,20 @@ func (f *Flow) GetNode(gisk *Gisk, key string) (NodeInterface, error) {
 			switch nodeType.NodeType {
 			case GeneralFlowNode:
 				var node generalFlowNode
+				if err := gisk.Unmarshal(nodeRaw, &node); err != nil {
+					f.errInitNodes = err
+					return
+				}
+				f.nodes[node.NodeKey] = &node
+			case BranchFlowNode:
+				var node branchFlowNode
+				if err := gisk.Unmarshal(nodeRaw, &node); err != nil {
+					f.errInitNodes = err
+					return
+				}
+				f.nodes[node.NodeKey] = &node
+			case ActionFlowNode:
+				var node actionFlowNode
 				if err := gisk.Unmarshal(nodeRaw, &node); err != nil {
 					f.errInitNodes = err
 					return
@@ -91,12 +107,12 @@ type NodeInterface interface {
 
 // 普通节点
 type generalFlowNode struct {
-	NodeKey    string       `json:"node_key" yaml:"node_key"`
-	NodeType   FlowNodeType `json:"node_type" yaml:"node_type"`
-	EleType    ElementType  `json:"element_type" yaml:"element_type"`
-	EleKey     string       `json:"element_key" yaml:"element_key"`
-	EleVersion string       `json:"element_version" yaml:"element_version"`
-	NextNode   string       `json:"next_node" yaml:"next_node"`
+	NodeKey    string       `json:"node_key" yaml:"node_key"`               //节点key
+	NodeType   FlowNodeType `json:"node_type" yaml:"node_type"`             //节点类型
+	EleType    ElementType  `json:"element_type" yaml:"element_type"`       //元素类型
+	EleKey     string       `json:"element_key" yaml:"element_key"`         //元素key
+	EleVersion string       `json:"element_version" yaml:"element_version"` //元素版本
+	NextNode   string       `json:"next_node" yaml:"next_node"`             //下一个节点
 }
 
 func (node *generalFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, error) {
@@ -134,16 +150,16 @@ func (node *generalFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, err
 	return append([]NodeInterface{}, nextNode), nil
 }
 
-// 分支节点
+// 分流节点
 type branchFlowNode struct {
-	NodeKey  string       `json:"node_key" yaml:"node_key"`
-	NodeType FlowNodeType `json:"node_type" yaml:"node_type"`
-	Left     string       `json:"left" yaml:"left"`
+	NodeKey  string       `json:"node_key" yaml:"node_key"`   //节点key
+	NodeType FlowNodeType `json:"node_type" yaml:"node_type"` //节点类型
+	Left     string       `json:"left" yaml:"left"`           //左侧
 	Branches []struct {
-		Operator Operator `json:"operator" yaml:"operator"` // 比较符号
-		Right    string   `json:"right" yaml:"right"`
-		NextNode string   `json:"next_node" yaml:"next_node"`
-	} `json:"branches" yaml:"branches"`
+		Operator Operator `json:"operator" yaml:"operator"`   // 比较符号
+		Right    string   `json:"right" yaml:"right"`         // 右侧
+		NextNode string   `json:"next_node" yaml:"next_node"` // 下一个节点
+	} `json:"branches" yaml:"branches"` // 分支
 }
 
 func (node *branchFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, error) {
@@ -175,4 +191,57 @@ func (node *branchFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, erro
 		}
 	}
 	return nextNodes, nil
+}
+
+// 动作节点
+type actionFlowNode struct {
+	NodeKey  string       `json:"node_key" yaml:"node_key"`   //节点key
+	NodeType FlowNodeType `json:"node_type" yaml:"node_type"` //节点类型
+	Actions  []RawMessage `json:"actions" yaml:"actions"`     //动作
+	NextNode string       `json:"next_node" yaml:"next_node"` //下一个节点
+}
+
+func (node *actionFlowNode) Parse(gisk *Gisk, flow *Flow) ([]NodeInterface, error) {
+	for _, action := range node.Actions {
+		//先获取动作类型
+		var actionType ActionType
+		err := gisk.Unmarshal(action, &actionType)
+		if err != nil {
+			return nil, err
+		}
+		actionStruct, ok := getAction(actionType.ActionType)
+		if !ok {
+			return nil, fmt.Errorf("action type %s not found", actionType.ActionType)
+		}
+		err = gisk.Unmarshal(action, &actionStruct)
+		if err != nil {
+			return nil, err
+		}
+		err = actionStruct.Parse(gisk)
+		if err != nil {
+			return nil, err
+		}
+	}
+	nextNodes := make([]NodeInterface, 0)
+	if node.NextNode != "" {
+		nextNode, err := flow.GetNode(gisk, node.NextNode)
+		if err != nil {
+			return nil, err
+		}
+		if nextNode == nil {
+			return nil, errors.New("next node not found")
+		}
+		nextNodes = append(nextNodes, nextNode)
+	}
+	return nextNodes, nil
+}
+
+func GetFlow(gisk *Gisk, key string, version string) (*Flow, error) {
+	dsl, _ := gisk.DslGetter.GetDsl(FLOW, key, version)
+	var f Flow
+	err := gisk.Unmarshal([]byte(dsl), &f)
+	if err != nil {
+		return nil, err
+	}
+	return &f, nil
 }

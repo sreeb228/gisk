@@ -119,5 +119,113 @@
         "value": "input_true_bool"
       }
     ]
+  },
+  "ruleset_ruleset_1": {
+    "key": "ruleset",
+    "name": "决策集1",
+    "desc": "决策集1",
+    "version": "1",
+    "parallel": false,
+    "rules": [
+      {
+        "rule_key": "rule1",
+        "rule_version": "1",
+        "break_mode": "hit_break"
+      },
+      {
+        "rule_key": "rule2",
+        "rule_version": "1",
+        "break_mode": "miss_break"
+      },
+      {
+        "rule_key": "rule3",
+        "rule_version": "1",
+        "break_mode": "miss_break"
+      }
+    ]
+  },
+  "variate_决策流分流_1": {
+    "key": "决策流分流",
+    "name": "决策流分流",
+    "desc": "决策流分流",
+    "version": "1",
+    "value_type": "string",
+    "default": "",
+    "is_input": false
+  },
+  "flow_flow_1": {
+    "key": "flow1",
+    "name": "决策流",
+    "desc": "决策流",
+    "version": "1",
+    "nodes": [
+      {
+        "node_key": "start",
+        "node_type": "general_flow_node",
+        "element_type": "ruleset",
+        "element_key": "ruleset",
+        "element_version": "1",
+        "next_node": "branch_node"
+      },
+      {
+        "node_key": "branch_node",
+        "node_type": "branch_flow_node",
+        "left": "func_rand(input_1_number,input_100_number)",
+        "branches": [
+          {
+            "operator": "lte",
+            "right": "input_20_number",
+            "next_node": ""
+          },
+          {
+            "operator": "gt",
+            "right": "input_20_number",
+            "next_node": ""
+          }
+        ]
+      },
+      {
+        "node_key": "branch_node",
+        "node_type": "branch_flow_node",
+        "left": "func_rand(input_1_number,input_100_number)",
+        "branches": [
+          {
+            "operator": "lte",
+            "right": "input_20_number",
+            "next_node": "action_flow_node1"
+          },
+          {
+            "operator": "gt",
+            "right": "input_20_number",
+            "next_node": "action_flow_node2"
+          }
+        ]
+      },
+      {
+        "node_key": "action_flow_node1",
+        "node_type": "action_flow_node",
+        "next_node": "",
+        "actions": [
+          {
+            "action_type": "assignment",
+            "variate": "variate_决策流分流_1",
+            "value": "input_20%_string"
+          }
+        ]
+      },
+      {
+        "node_key": "action_flow_node2",
+        "node_type": "action_flow_node",
+        "next_node": "",
+        "actions": [
+          {
+            "action_type": "assignment",
+            "variate": "variate_决策流分流_1",
+            "value": "input_80%_string"
+          }
+        ]
+      }
+
+    ]
   }
 }

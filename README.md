@@ -281,7 +281,7 @@ type Compare struct {
 
 ## 规则集（决策集）
 
-* 规则集是多个规则的集合，支持串行并行执行和中断。并行模式下规则的先后顺序和中断不生效*
+*规则集是多个规则的集合，支持串行并行执行和中断。并行模式下规则的先后顺序和中断不生效*
 
 规则集dsl:
 ```json
@@ -331,6 +331,123 @@ type rulesetRule struct {
 
 
 ## 决策流
-决策流支持普通决策流，分流决策流和赋值决策流（规则树）
+决策流支持普通节点，分流节点和动作节点
 
-未完待续。。
+### 普通节点
+*普通节点可以执行一个元素，元素可为规则，规则集等*
+```go
+type generalFlowNode struct {
+	NodeKey    string       `json:"node_key" yaml:"node_key"`               //节点key
+	NodeType   FlowNodeType `json:"node_type" yaml:"node_type"`             //节点类型
+	EleType    ElementType  `json:"element_type" yaml:"element_type"`       //元素类型
+	EleKey     string       `json:"element_key" yaml:"element_key"`         //元素key
+	EleVersion string       `json:"element_version" yaml:"element_version"` //元素版本
+	NextNode   string       `json:"next_node" yaml:"next_node"`             //下一个节点
+}
+```
+### 分流节点
+*分流节点通过比较条件进行分流*
+```go
+type branchFlowNode struct {
+	NodeKey  string       `json:"node_key" yaml:"node_key"`   //节点key
+	NodeType FlowNodeType `json:"node_type" yaml:"node_type"` //节点类型
+	Left     string       `json:"left" yaml:"left"`           //左侧
+	Branches []struct {
+		Operator Operator `json:"operator" yaml:"operator"`   // 比较符号
+		Right    string   `json:"right" yaml:"right"`         // 右侧
+		NextNode string   `json:"next_node" yaml:"next_node"` // 下一个节点
+	} `json:"branches" yaml:"branches"` // 分支
+}
+```
+### 动作节点
+*动作节点执行动作，公用规则动作，可以自定义*
+```go
+type actionFlowNode struct {
+	NodeKey  string       `json:"node_key" yaml:"node_key"`   //节点key
+	NodeType FlowNodeType `json:"node_type" yaml:"node_type"` //节点类型
+	Actions  []RawMessage `json:"actions" yaml:"actions"`     //动作
+	NextNode string       `json:"next_node" yaml:"next_node"` //下一个节点
+}
+```
+
+复杂的决策流：
+```json
+{
+    "key": "flow1",
+    "name": "普通决策流",
+    "desc": "普通决策流",
+    "version": "1",
+    "nodes": [
+        {
+            "node_key": "start",
+            "node_type": "general_flow_node",
+            "element_type": "ruleset",
+            "element_key": "ruleset",
+            "element_version": "1",
+            "next_node": "branch_node"
+        },
+        {
+            "node_key": "branch_node",
+            "node_type": "branch_flow_node",
+            "left": "func_rand(input_1_number,input_100_number)",
+            "branches": [
+                {
+                    "operator": "lte",
+                    "right": "input_20_number",
+                    "next_node": ""
+                },
+                {
+                    "operator": "gt",
+                    "right": "input_20_number",
+                    "next_node": ""
+                }
+            ]
+        },
+        {
+            "node_key": "branch_node",
+            "node_type": "branch_flow_node",
+            "left": "func_rand(input_1_number,input_100_number)",
+            "branches": [
+                {
+                    "operator": "lte",
+                    "right": "input_20_number",
+                    "next_node": "action_flow_node1"
+                },
+                {
+                    "operator": "gt",
+                    "right": "input_20_number",
+                    "next_node": "action_flow_node2"
+                }
+            ]
+        },
+        {
+            "node_key": "action_flow_node1",
+            "node_type": "action_flow_node",
+            "next_node": "",
+            "actions": [
+                {
+                    "action_type": "assignment",
+                    "variate": "variate_决策流分流_1",
+                    "value": "input_20%_string"
+                }
+            ]
+        },
+        {
+            "node_key": "action_flow_node2",
+            "node_type": "action_flow_node",
+            "next_node": "",
+            "actions": [
+                {
+                    "action_type": "assignment",
+                    "variate": "variate_决策流分流_1",
+                    "value": "input_80%_string"
+                }
+            ]
+        }
+    ]
+}
+
+```
+
+解释为:
+![决策流图](docs/flow.png)
