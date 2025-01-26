@@ -450,4 +450,4 @@ type actionFlowNode struct {
 ```
 
 解释为:
-![决策流图](https://img2.imgtp.com/2024/04/28/lAvGEzqX.png)
+![决策流图](https://gitee.com/sreeb/gisk/raw/master/docs/flow.png)
